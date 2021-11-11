@@ -2,6 +2,7 @@ CONFIG_NAME: 'attn2'
 
 DATASET_NAME: 'birds'
 DATA_DIR: '../data/birds'
+DA_DATA_DIR: '../data/birds_da/v4-0.9-bbox-smallvocab-80k-drank16/da_data'
 GPU_ID: 0
 WORKERS: 4
 
@@ -16,7 +17,7 @@ TRAIN:
     B_NET_D: True
     BATCH_SIZE: 20  # 22
     MAX_EPOCH: 600
-    SNAPSHOT_INTERVAL: 50
+    SNAPSHOT_INTERVAL: 10
     DISCRIMINATOR_LR: 0.0002
     GENERATOR_LR: 0.0002
     #

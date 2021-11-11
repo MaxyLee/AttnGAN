@@ -5,16 +5,17 @@ DATA_DIR: '../data/birds'
 GPU_ID: 3
 WORKERS: 1
 
-B_VALIDATION: False  # True  # False
+B_VALIDATION: True  # True  # False
 TREE:
     BRANCH_NUM: 3
 
 
 TRAIN:
     FLAG: False
-    NET_G: '../models/bird_AttnGAN2.pth'
+    # NET_G: '../models/bird_AttnGAN2.pth'
+    NET_G: '/data3/private/mxy/projects/mmda/code/AttnGAN/output/birds_attn2_2021_11_09_20_24_18/Model/netG_epoch_240.pth'
     B_NET_D: False
-    BATCH_SIZE: 100
+    BATCH_SIZE: 6
     NET_E: '../DAMSMencoders/bird/text_encoder200.pth'
 
 
