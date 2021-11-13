@@ -158,6 +158,7 @@ def discriminator_loss(netD, real_imgs, fake_imgs, conditions,
                 (fake_errD + cond_fake_errD + cond_wrong_errD) / 3.)
     else:
         errD = cond_real_errD + (cond_fake_errD + cond_wrong_errD) / 2.
+    import ipdb; ipdb.set_trace()
     return errD
 
 

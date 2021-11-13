@@ -42,8 +42,8 @@ class condGANTrainer(object):
 
         self.n_words = n_words
         self.ixtoword = ixtoword
-        self.data_loader = data_loader
         self.dataset = dataset
+        self.data_loader = data_loader
         self.num_batches = len(self.data_loader)
 
     def build_models(self):
@@ -216,6 +216,7 @@ class condGANTrainer(object):
                 % (self.image_dir, name, gen_iterations)
             im.save(fullpath)
 
+    @torch.no_grad()
     def train(self):
         text_encoder, image_encoder, netG, netsD, start_epoch = self.build_models()
         avg_param_G = copy_G_params(netG)
@@ -272,11 +273,16 @@ class condGANTrainer(object):
                     errD = discriminator_loss(netsD[i], imgs[i], fake_imgs[i],
                                               sent_emb, real_labels, fake_labels)
                     # backward and update parameters
-                    errD.backward()
-                    optimizersD[i].step()
+                    # errD.backward()
+                    # optimizersD[i].step()
                     errD_total += errD
                     D_logs += 'errD%d: %.2f ' % (i, errD.data[0])
+                
+                print('Epoch [{}/{}] Step [{}/{}]'.format(epoch, self.max_epoch, step,
+                                                              self.num_batches) + ' ' + D_logs + ' ')
+                import ipdb; ipdb.set_trace()
 
+                '''
                 #######################################################
                 # (4) Update G network: maximize log(D(G(z)))
                 ######################################################
@@ -299,33 +305,35 @@ class condGANTrainer(object):
                 for p, avg_p in zip(netG.parameters(), avg_param_G):
                     avg_p.mul_(0.999).add_(0.001, p.data)
 
-                # if gen_iterations % 100 == 0:
-                print(D_logs + '\n' + G_logs)
+                if gen_iterations % 100 == 0:
+                    print('Epoch [{}/{}] Step [{}/{}]'.format(epoch, self.max_epoch, step,
+                                                              self.num_batches) + ' ' + D_logs + ' ' + G_logs)
                 # save images
                 if gen_iterations % 1000 == 0:
                     backup_para = copy_G_params(netG)
                     load_params(netG, avg_param_G)
-                    self.save_img_results(netG, fixed_noise, sent_emb,
-                                          words_embs, mask, image_encoder,
-                                          captions, cap_lens, epoch, name='average')
+                    # self.save_img_results(netG, fixed_noise, sent_emb,
+                    #                       words_embs, mask, image_encoder,
+                    #                       captions, cap_lens, epoch, name='average')
                     load_params(netG, backup_para)
                     #
                     # self.save_img_results(netG, fixed_noise, sent_emb,
                     #                       words_embs, mask, image_encoder,
                     #                       captions, cap_lens,
                     #                       epoch, name='current')
+                '''
             end_t = time.time()
 
             print('''[%d/%d][%d]
-                  Loss_D: %.2f Loss_G: %.2f Time: %.2fs'''
+                  Loss_D: %.2f Time: %.2fs'''
                   % (epoch, self.max_epoch, self.num_batches,
-                     errD_total.data[0], errG_total.data[0],
+                     errD_total.data[0],
                      end_t - start_t))
 
-            if epoch % cfg.TRAIN.SNAPSHOT_INTERVAL == 0:  # and epoch != 0:
-                self.save_model(netG, avg_param_G, netsD, epoch)
+        #     if epoch % cfg.TRAIN.SNAPSHOT_INTERVAL == 0:  # and epoch != 0:
+        #         self.save_model(netG, avg_param_G, netsD, epoch)
 
-        self.save_model(netG, avg_param_G, netsD, self.max_epoch)
+        # self.save_model(netG, avg_param_G, netsD, self.max_epoch)
 
     def save_singleimages(self, images, filenames, save_dir,
                           split_dir, sentenceID=0):
@@ -396,17 +404,15 @@ class condGANTrainer(object):
             mkdir_p(save_dir)
 
             cnt = 0
-            R_count = 0
-            R = np.zeros(30000)
             cont = True
+            R = np.zeros(30000)
             for ii in range(11):  # (cfg.TEXT.CAPTIONS_PER_IMAGE):
-                if not cont:
+                if (cont == False):
                     break
                 for step, data in enumerate(self.data_loader, 0):
                     if not cont:
                         break
-                    cnt += batch_size
-                    if cnt % 100 == 0:
+                    if cnt % 1000 == 0:
                         print('cnt: ', cnt)
                     # if step > 50:
                     #     break
@@ -460,10 +466,10 @@ class condGANTrainer(object):
                         norm = torch.mm(cnn_code_norm, rnn_code_norm.transpose(0, 1))
                         scores0 = scores / norm.clamp(min=1e-8)
                         if torch.argmax(scores0) == 0:
-                            R[R_count] = 1
-                        R_count += 1
-
-                    if R_count >= 30000:
+                            R[cnt] = 1
+                        cnt += 1
+                    
+                    if cnt >= 30000:
                         sum = np.zeros(10)
                         np.random.shuffle(R)
                         for i in range(10):
@@ -472,6 +478,8 @@ class condGANTrainer(object):
                         R_std = np.std(sum)
                         print("R mean:{:.4f} std:{:.4f}".format(R_mean, R_std))
                         cont = False
+
+                    
 
     def gen_example(self, data_dic):
         if cfg.TRAIN.NET_G == '':

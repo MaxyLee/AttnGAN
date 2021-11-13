@@ -1,8 +1,9 @@
 from __future__ import print_function
 
 from miscc.config import cfg, cfg_from_file
-from datasets import TextDataset, MMCelebADataset, CubDADataset, ConcatDataset
-from trainer import condGANTrainer as trainer
+# from datasets import TextDataset, MMCelebADataset, CubDADataset, ConcatDataset
+from new_datasets import TextDataset, CubDADataset, ConcatDataset
+from trainer_test import condGANTrainer as trainer
 
 import os
 import sys
@@ -132,6 +133,7 @@ if __name__ == "__main__":
     #                       transform=image_transform)
     if cfg.TRAIN.FLAG:
         # add augmented data
+        filter_name = 'filtered_names_80k_drank16_best_of_best.txt'
         da_image_transform = transforms.Compose([
             transforms.Scale(int(imsize * 76 / 64)),
             transforms.RandomCrop(imsize),
@@ -139,6 +141,7 @@ if __name__ == "__main__":
         da_dataset = CubDADataset(cfg.DA_DATA_DIR, 
                                   base_size=cfg.TREE.BASE_SIZE, 
                                   transform=da_image_transform,
+                                #   filter_name=filter_name,
                                   ixtoword=dataset.ixtoword,
                                   wordtoix=dataset.wordtoix)
         dataset = ConcatDataset([dataset, da_dataset])
